@@ -1,7 +1,17 @@
-# hidden files, exluding gitattributes
-.*
-!.gitattributes
+# Secrets
+.env
 
-# data folder
-/data
-/lorawan-devices
+# Docker runtime data (si se crean)
+data/
+postgres-data/
+redis-data/
+
+# Logs
+*.log
+
+# Node-RED (cuando lo agreguemos)
+node-red/data/flows_cred.json
+
+# OS
+.DS_Store
+Thumbs.db
