@@ -1,0 +1,148 @@
+[
+    {
+        "id": "0d7cacfe042fffe5",
+        "type": "mqtt in",
+        "z": "2f4e8f0969a3e2be",
+        "name": "Chirpstack #",
+        "topic": "application/#",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "8bff811d0320215d",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 130,
+        "y": 20,
+        "wires": [
+            [
+                "cda5ddcd5af39414"
+            ]
+        ]
+    },
+    {
+        "id": "48c9839b9b39687e",
+        "type": "mqtt in",
+        "z": "2f4e8f0969a3e2be",
+        "name": "Chirpstack Uplink",
+        "topic": "application/+/device/+/event/up",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "8bff811d0320215d",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 140,
+        "y": 200,
+        "wires": [
+            [
+                "29bb5a571280c57c"
+            ]
+        ]
+    },
+    {
+        "id": "29bb5a571280c57c",
+        "type": "switch",
+        "z": "2f4e8f0969a3e2be",
+        "name": "Switch",
+        "property": "payload.deviceInfo.devEui",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "a8404119865ae167",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "a8404173a65ae175",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 310,
+        "y": 200,
+        "wires": [
+            [
+                "5726a2cd5ba8e2d7"
+            ],
+            [
+                "178d3cd74bd6792a"
+            ]
+        ]
+    },
+    {
+        "id": "5726a2cd5ba8e2d7",
+        "type": "function",
+        "z": "2f4e8f0969a3e2be",
+        "name": "Remoto | Downlink",
+        "func": "// =====================\n// CONFIG FIJA (por ahora)\n// =====================\nconst APP_ID = \"92659369-bd76-46ee-98db-3f4bafdd8db6\";\nconst DEV_EUI_LOCAL = \"a8404173a65ae175\"; // <-- LOCAL (tu actuador)\n\n// =====================\n// LEER ENTRADAS DEL REMOTO (esto es lo clave)\n// =====================\nconst di1 = msg.payload?.object?.DI1_status; // \"H\" o \"L\"\nconst di2 = msg.payload?.object?.DI2_status; // \"H\" o \"L\"\n\nif (di1 === undefined || di2 === undefined) {\n    node.warn(\"No vienen DI1_status / DI2_status en msg.payload.object\");\n    return null;\n}\n\n// L = activar / H = desactivar (según tu lógica)\nconst r1 = (di1 === \"L\") ? 0x01 : 0x00;\nconst r2 = (di2 === \"L\") ? 0x01 : 0x00;\n\n// Prefijo 0x03 + R1 + R2  => 03 xxyy\nconst bytes = [0x03, r1, r2];\n\n// Base64 (esto era lo que faltaba en tu caso)\nconst dataB64 = Buffer.from(bytes).toString(\"base64\");\n\n// Topic DOWNLINK del LOCAL\nmsg.topic = `application/${APP_ID}/device/${DEV_EUI_LOCAL}/command/down`;\n\n// Payload exacto que te funcionó con el experto\nmsg.payload = {\n    devEui: DEV_EUI_LOCAL,\n    confirmed: true,\n    fPort: 2,\n    data: dataB64\n};\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `DI1=${di1} DI2=${di2} -> ${dataB64}` });\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 550,
+        "y": 160,
+        "wires": [
+            [
+                "4d2597fb7c8a6ba8"
+            ]
+        ]
+    },
+    {
+        "id": "178d3cd74bd6792a",
+        "type": "function",
+        "z": "2f4e8f0969a3e2be",
+        "name": "Local | Downlink",
+        "func": "// =====================\n// CONFIG FIJA (por ahora)\n// =====================\nconst APP_ID = \"92659369-bd76-46ee-98db-3f4bafdd8db6\";\nconst DEV_EUI_LOCAL = \"a8404119865ae167\"; // <-- LOCAL (tu actuador)\n\n// =====================\n// LEER ENTRADAS DEL REMOTO (esto es lo clave)\n// =====================\nconst di1 = msg.payload?.object?.DI1_status; // \"H\" o \"L\"\nconst di2 = msg.payload?.object?.DI2_status; // \"H\" o \"L\"\n\nif (di1 === undefined || di2 === undefined) {\n    node.warn(\"No vienen DI1_status / DI2_status en msg.payload.object\");\n    return null;\n}\n\n// L = activar / H = desactivar (según tu lógica)\nconst r1 = (di1 === \"L\") ? 0x01 : 0x00;\nconst r2 = (di2 === \"L\") ? 0x01 : 0x00;\n\n// Prefijo 0x03 + R1 + R2  => 03 xxyy\nconst bytes = [0x03, r1, r2];\n\n// Base64 (esto era lo que faltaba en tu caso)\nconst dataB64 = Buffer.from(bytes).toString(\"base64\");\n\n// Topic DOWNLINK del LOCAL\nmsg.topic = `application/${APP_ID}/device/${DEV_EUI_LOCAL}/command/down`;\n\n// Payload exacto que te funcionó con el experto\nmsg.payload = {\n    devEui: DEV_EUI_LOCAL,\n    confirmed: true,\n    fPort: 2,\n    data: dataB64\n};\n\nnode.status({ fill: \"green\", shape: \"dot\", text: `DI1=${di1} DI2=${di2} -> ${dataB64}` });\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 540,
+        "y": 240,
+        "wires": [
+            [
+                "4d2597fb7c8a6ba8"
+            ]
+        ]
+    },
+    {
+        "id": "8bff811d0320215d",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "mosquitto",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    }
+]
